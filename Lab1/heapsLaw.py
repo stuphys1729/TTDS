@@ -60,6 +60,7 @@ def main(filename="bible.txt"):
     text = "k = {0:.3f}\nb = {1:.3f}".format(k,b)
     ax.text(0.78, 0.15, text, transform=ax.transAxes, fontsize=14,
             verticalalignment='top', bbox=props)
+    plt.savefig('HeapsLaw.png', dpi=300)
     plt.show()
 
 
