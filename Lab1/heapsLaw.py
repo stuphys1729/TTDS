@@ -32,6 +32,8 @@ def main(filename="bible.txt"):
             n_list.append(n)
             v_list.append(v)
 
+    fig, ax = plt.subplots()
+
     plt.scatter(n_list, v_list)
 
     def heaps(params):
@@ -52,6 +54,12 @@ def main(filename="bible.txt"):
     pred = [ k*n**b for n in n_list ]
 
     plt.plot(n_list, pred, color='r')
+
+    plt.title('Heap\'s Law - The bible')
+    props = dict(boxstyle='round', facecolor='g', alpha=0.3)
+    text = "k = {0:.3f}\nb = {1:.3f}".format(k,b)
+    ax.text(0.78, 0.15, text, transform=ax.transAxes, fontsize=14,
+            verticalalignment='top', bbox=props)
     plt.show()
 
 
