@@ -11,7 +11,7 @@ def main(filename="bible.txt"):
     with open('stops.txt', 'r') as f:
         stops = f.readlines()
 
-    # Should we stem the stop words?
+    # stem the stop words
     for i in range(len(stops)):
         stops[i] = ps.stem( stops[i].rstrip('\r\n') )
 
@@ -45,6 +45,40 @@ def main(filename="bible.txt"):
     with open(new_file, 'w') as f:
         for tok in tokens:
             f.write(tok + '\n')
+
+def prep_text(text):
+
+    # Initialise stemmer
+    ps = PorterStemmer()
+
+    # Get stop words
+    with open('stops.txt', 'r') as f:
+        stops = f.readlines()
+
+    # stem the stop words
+    for i in range(len(stops)):
+        stops[i] = ps.stem( stops[i].rstrip('\r\n') )
+
+    ## Tokenisation ##
+    tokens = []
+    tokenizer = RegexpTokenizer(r'\w+') # Only keep alpha-numeric (no periods)
+
+    for line in text.split('\n'):
+
+        toks = tokenizer.tokenize(line)
+
+        for tok in toks:
+
+            try:
+                stemmed = ps.stem(tok.lower())
+            except UnicodeDecodeError:
+                continue
+
+            if stemmed not in stops:
+                tokens.append( stemmed )
+
+    return tokens
+
 
 
 if __name__ == '__main__':
