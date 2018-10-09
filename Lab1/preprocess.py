@@ -1,45 +1,15 @@
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize, RegexpTokenizer
+
+#from nltk.tokenize import RegexpTokenizer
+from .manualTokeniser import RegexpTokenizer
 import sys
 
 def main(filename="bible.txt"):
 
-    # Initialise stemmer
-    ps = PorterStemmer()
-
-    # Get stop words
-    with open('stops.txt', 'r') as f:
-        stops = f.readlines()
-
-    # stem the stop words
-    for i in range(len(stops)):
-        stops[i] = ps.stem( stops[i].rstrip('\r\n') )
-
-    ## Tokenisation ##
-    tokens = []
-    tokenizer = RegexpTokenizer(r'\w+') # Only keep alpha-numeric (no periods)
     with open(filename, 'r') as f:
-        for line in f:
-            """
-            toks = line.split() # default call splits on all punctuation
-            for i in range(len(toks)): # apart from period (.)
-                toks[i] = toks[i].rstrip('.').lower()
-            tokens += toks
-            """
+        text = f.read() # Assumes it can all fit in memory
 
-            toks = tokenizer.tokenize(line)
-
-            for tok in toks:
-
-                try:
-                    stemmed = ps.stem(tok.lower())
-                except UnicodeDecodeError:
-                    continue
-
-                if stemmed not in stops:
-                    tokens.append( stemmed )
-
-    print(tokens[:5])
+    tokens = prep_text(text)
 
     new_file = filename + '.preproc'
     with open(new_file, 'w') as f:
@@ -60,12 +30,25 @@ def prep_text(text):
         stops[i] = ps.stem( stops[i].rstrip('\r\n') )
 
     ## Tokenisation ##
+    #pattern = r"[@\#]?\w+(?:[-']\w+)*"
+    pattern =   r'''(?x)(
+                ([A-Z]\.)+
+                |\d+:\d+
+                |(https?://)?(\w+\.)(\w{2,})+([\w/]+)?
+                |[@\#]?\w+(?:[-']\w+)*
+                |[\$\£]\d+(\.\d+)?%?
+                )
+                '''
+    # Adapted from:
+    # http://jeffreyfossett.com/2014/04/25/tokenizing-raw-text-in-python.html
+
+    tokenizer = RegexpTokenizer(pattern)
     tokens = []
-    tokenizer = RegexpTokenizer(r'\w+') # Only keep alpha-numeric (no periods)
 
     for line in text.split('\n'):
 
         toks = tokenizer.tokenize(line)
+        toks = [ x for x in list(sum(toks, ())) if x ]
 
         for tok in toks:
 
