@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 import sys
-sys.path.append("..") # Adds higher directory to python modules path.
+sys.path.append("..") # Lets me use other labs as modules
 
 import pickle
 
@@ -8,8 +8,9 @@ from Lab1 import preprocess
 
 class InvertedIndex(object):
 
-    def __init__(self, index=None):
+    def __init__(self, index=None, N=0):
         self.index = index if index else {}
+        self.N = N
         """
         Each entry in the index will be hashed by the term, resulting in a list.
         That list will itself contain:
@@ -38,7 +39,7 @@ class InvertedIndex(object):
 
     def str_term(self, term):
         string = ''
-        string += "{}:{}\n".format(term, self.index[term][0])
+        string += "{}:({})\n".format(term, self.index[term][0])
 
         for doc in self.index[term][1]:
             num_times = len(self.index[term][1][doc])
@@ -148,13 +149,21 @@ def main(filename="sample.xml"):
     index = InvertedIndex()
 
     text_loc = -1
+    head_loc = -1
     for i in range(len(root[0])):
         if root[0][i].tag.lower() == 'text':
             text_loc = i
-            break
+        if root[0][i].tag.lower() == 'headline':
+            head_loc = i
 
     for i in range(len(root)):
-        terms = preprocess.prep_text( root[i][text_loc].text )
+        if head_loc != -1 and text_loc != -1:
+            terms = preprocess.prep_text( root[i][head_loc].text + root[i][text_loc].text )
+        elif text_loc != -1:
+            terms = preprocess.prep_text( root[i][text_loc].text )
+        else:
+            raise ValueError("Could not find collection text")
+            
         for j in range(len(terms)):
             index.add_occurance(terms[j], i, j)
 
@@ -162,7 +171,7 @@ def main(filename="sample.xml"):
         f.write(str(index)) # For visualisation
 
     with open(filename + '.pickle', 'wb') as f:
-        pickle.dump(index.index, f) # For quick re-load
+        pickle.dump((index.index, len(root)), f) # For quick re-load
 
 
 if __name__ == '__main__':

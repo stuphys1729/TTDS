@@ -1,17 +1,20 @@
-from indexer import InvertedIndex
 import pickle
 import sys
 import re
 sys.path.append("..") # Adds higher directory to python modules path.
 
 from Lab1 import preprocess
+from Lab2 import indexer
+
+def load_index(filename):
+    with open(filename, 'rb') as f:
+        index_dict, N = pickle.load(f)
+    return indexer.InvertedIndex(index_dict, N)
 
 
 def main(filename='sample.xml.pickle'):
 
-    with open(filename, 'rb') as f:
-        index_dict = pickle.load(f)
-    index = InvertedIndex(index_dict)
+    index = load_index(filename)
 
     terms = index.get_terms()
 
