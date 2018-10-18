@@ -8,15 +8,19 @@ from Lab1 import preprocess
 
 class InvertedIndex(object):
 
-    def __init__(self, index=None, N=0):
+    def __init__(self, index=None, N=0, doc_lengths=None):
         self.index = index if index else {}
         self.N = N
+        self.doc_lengths = doc_lengths if doc_lengths else {}
         """
         Each entry in the index will be hashed by the term, resulting in a list.
         That list will itself contain:
             0: The document frequency of that term
             1: A dictionary of doc_num -> position list
         """
+
+    def add_doc_length(self, doc_num, length):
+        self.doc_lengths[doc_num] = length
 
     def add_occurance(self, term, doc_num, location):
 
@@ -148,24 +152,48 @@ def main(filename="sample.xml"):
 
     index = InvertedIndex()
 
-    text_loc = -1
-    head_loc = -1
+    text_loc  = -1
+    head_loc  = -1
+    docno_loc = -1
     for i in range(len(root[0])):
-        if root[0][i].tag.lower() == 'text':
-            text_loc = i
-        if root[0][i].tag.lower() == 'headline':
+        if root[0][i].tag == 'TEXT':
+            text_loc = i # Annoyingly this changes
+        if root[0][i].tag == 'HEADLINE':
             head_loc = i
+        if root[0][i].tag == 'DOCNO':
+            docno_loc = i
+
+    if text_loc == -1:
+        raise ValueError("Could not find collection text")
 
     for i in range(len(root)):
-        if head_loc != -1 and text_loc != -1:
+
+        # Some security against structure change
+        if root[i][text_loc].tag != 'TEXT':
+            for j in range(len(root[i])):
+                if root[i][j].tag == 'TEXT':
+                    text_loc = j
+
+        if docno_loc != -1 and root[i][docno_loc].tag != 'DOCNO':
+            for j in range(len(root[i])):
+                if root[i][j].tag == 'DOCNO':
+                    docno_loc = j
+
+        if head_loc != -1:
             terms = preprocess.prep_text( root[i][head_loc].text + root[i][text_loc].text )
-        elif text_loc != -1:
-            terms = preprocess.prep_text( root[i][text_loc].text )
         else:
-            raise ValueError("Could not find collection text")
-            
+            terms = preprocess.prep_text( root[i][text_loc].text )
+
+        # Default doc numbering
+        if docno_loc != -1:
+            docno = int(root[i][docno_loc].text)
+        else:
+            docno = i
+
+        index.add_doc_length(docno, len(terms))
+
         for j in range(len(terms)):
-            index.add_occurance(terms[j], i, j)
+            index.add_occurance(terms[j], docno, j)
 
     with open(filename + '.index', 'w') as f:
         f.write(str(index)) # For visualisation

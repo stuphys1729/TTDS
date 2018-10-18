@@ -25,12 +25,12 @@ def main(filename='sample.xml.pickle'):
             break
 
         if 'AND' in phrase:
-            terms = re.split(r" AND ", phrase)
-            index.conjunction(terms[0], terms[1])
+            qterms = re.split(r" AND ", phrase)
+            index.conjunction(qterms[0], qterms[1])
 
         elif 'OR' in phrase:
-            terms = re.split(r' OR ', phrase)
-            index.disjunction(terms[0], terms[1])
+            qterms = re.split(r' OR ', phrase)
+            index.disjunction(qterms[0], qterms[1])
 
         elif phrase[0] == '"': # Start of a phrase that's not part of conditional
             index.phrase_search(phrase.strip('"'))
