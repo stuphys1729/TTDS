@@ -47,7 +47,7 @@ class InvertedIndex(object):
 
         for doc in self.index[term][1]:
             num_times = len(self.index[term][1][doc])
-            string += '\t' + str(doc) + ':({}) '.format(num_times)
+            string += '\t{0:>4}:({1:>2}) '.format(doc, num_times)
             for i in range(num_times - 1):
                 string += str(self.index[term][1][doc][i]) + ', '
             string += str(self.index[term][1][doc][-1]) + '\n'
@@ -136,13 +136,37 @@ class InvertedIndex(object):
                     common_docs = set(self.index[term][1].keys())
                     first = False
                 else:
-                    common_docs &= self.index[term]
+                    common_docs &= self.index[term][1].keys()
             else:
                 return # One term was not found at all
+
         if len(common_docs) == 0:
             return # all terms did not exist in any one document
-        #else:
+        else:
             # If we get this far, we need to check the order of terms
+            pot_docs = {}
+            for doc in common_docs:
+                order = []
+                for term in terms:
+                    order.append(self.index[term][1][doc])
+                pot_docs[doc] = order
+
+            return_docs = {}
+            for doc in pot_docs:
+                for i in pot_docs[doc][0]:
+                    if (i+1) in pot_docs[doc][1]:
+                        # We have found the phrase
+                        if doc in return_docs:
+                            return_docs[doc].append(i)
+                        else:
+                            return_docs[doc] = [i]
+
+            for doc in return_docs:
+                print("{0}: ".format(doc), end='')
+                for i in return_docs[doc]:
+                    print("{0}-{1} ".format(i, i+1), end='')
+                print('')
+
 
 
 def main(filename="sample.xml"):

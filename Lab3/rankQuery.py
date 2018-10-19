@@ -38,7 +38,6 @@ def main(filename='sample.xml.pickle'):
             for doc in rel_docs:
                 score = 0
                 for i in range(len(phrase)):
-                    #print(indices[i])
                     df = indices[i][0]
                     if doc in indices[i][1]:
                         tf = len(indices[i][1][doc])
