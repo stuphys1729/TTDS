@@ -24,16 +24,23 @@ def main(filename='sample.xml.pickle'):
         if phrase.lower() == 'stop' or phrase.lower() == 'quit':
             break
 
-        if 'AND' in phrase:
+        if ' AND ' in phrase:
             qterms = re.split(r" AND ", phrase)
             index.conjunction(qterms[0], qterms[1])
 
-        elif 'OR' in phrase:
+        elif ' OR ' in phrase:
             qterms = re.split(r' OR ', phrase)
             index.disjunction(qterms[0], qterms[1])
 
         elif phrase[0] == '"': # Start of a phrase that's not part of conditional
             index.phrase_search(phrase.strip('"'))
+
+        elif phrase[0] == '#':
+            first_split = phrase.split('(')
+            dist = int( first_split[0][1:] )
+            prox_terms = first_split[1].split(',')
+
+            index.proximity_search(prox_terms[0], prox_terms[1], dist)
 
         else:
             phrase = preprocess.prep_text(phrase)[0] # 1 word for now

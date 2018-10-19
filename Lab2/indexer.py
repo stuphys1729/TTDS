@@ -168,6 +168,60 @@ class InvertedIndex(object):
                 print('')
 
 
+    def proximity_search(self, term1_pre, term2_pre, dist):
+
+        term1 = self.prep_term(term1_pre)
+        term2 = self.prep_term(term2_pre)
+
+        common_docs = {}
+        first = True
+        for term in [term1, term2]:
+            if term in self.index:
+                if first:
+                    common_docs = set(self.index[term][1].keys())
+                    first = False
+                else:
+                    common_docs &= self.index[term][1].keys()
+            else:
+                return # One term was not found at all
+
+        if len(common_docs) == 0:
+            return # both terms did not exist in any one document
+        else:
+            # If we get this far, we need to check the position of terms
+            pot_docs = {}
+            for doc in common_docs:
+                order = []
+                for term in [term1, term2]:
+                    order.append(self.index[term][1][doc])
+                pot_docs[doc] = order
+                
+        return_docs = {doc: [] for doc in pot_docs}
+        for doc in pot_docs:
+            i = 0
+            j = 0 # Linear Merge
+            while (i < len(pot_docs[doc][0])) and (j < len(pot_docs[doc][1])):
+
+                ti = pot_docs[doc][0][i]
+                tj = pot_docs[doc][1][j]
+                d = ti - tj
+                if d > 0: # t1 ahead of t2
+                    if d <= dist:
+                        return_docs[doc].append((ti,tj))
+                    j += 1
+                else: # t2 ahead of t1
+                    if d >= -dist:
+                        return_docs[doc].append((ti,tj))
+                    i += 1
+
+        for doc in return_docs:
+            if return_docs[doc] != []:
+                print("\t{0:>4}:({1:>2}) ".format(doc, len(return_docs[doc])), end='')
+                for i in return_docs[doc][:-1]:
+                    print("({0},{1}), ".format(*i), end='')
+
+                print("({0},{1})".format(*return_docs[doc][-1]))
+
 
 def main(filename="sample.xml"):
 
