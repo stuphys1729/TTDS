@@ -218,13 +218,19 @@ class InvertedIndex(object):
         if internal:
             return return_docs
 
-        for doc in return_docs:
-            if return_docs[doc] != []:
-                print("\t{0:>4}:({1:>2}) ".format(doc, len(return_docs[doc])), end='')
-                for i in return_docs[doc][:-1]:
-                    print("({0},{1}), ".format(*i), end='')
+        if verbose_print:
+            for doc in return_docs:
+                if return_docs[doc] != []:
+                    print("\t{0:>4}:({1:>2}) ".format(doc, len(return_docs[doc])), end='')
+                    for i in return_docs[doc][:-1]:
+                        print("({0},{1}), ".format(*i), end='')
 
-                print("({0},{1})".format(*return_docs[doc][-1]))
+                    print("({0},{1})".format(*return_docs[doc][-1]))
+        else:
+            result = ''
+            for doc in sorted(return_docs):
+                result += str(doc) + ', '
+            print(result[:-2])
 
 
 def main(filename="sample.xml"):

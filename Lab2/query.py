@@ -12,17 +12,30 @@ def load_index(filename):
     return indexer.InvertedIndex(index_dict, N, doc_lengths)
 
 
-def main(filename='sample.xml.pickle'):
+def main(filename='sample.xml.pickle', queryfile=None):
 
     index = load_index(filename)
 
     terms = index.get_terms()
 
-    while(True):
-        phrase = input("> ")
+    if queryfile:
+        with open(queryfile, 'r') as f:
+            for line in f:
+                print(line.rstrip('\n'))
+                m = re.search(r'\d+ (.*)', line)
+                process_query( index, terms, m.group(1) )
 
-        if phrase.lower() == 'stop' or phrase.lower() == 'quit':
-            break
+    else:
+        while(True):
+            phrase = input("> ")
+
+            if phrase.lower() == 'stop' or phrase.lower() == 'quit':
+                break
+
+            process_query(index, terms, phrase)
+
+
+def process_query(index, terms, phrase):
 
         if ' AND ' in phrase:
             qterms = re.split(r" AND ", phrase)
@@ -58,10 +71,15 @@ def main(filename='sample.xml.pickle'):
                 index.single_search(phrase[4:], True)
             else:
                 index.single_search(phrase)
-                
+
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
+
+    if len(sys.argv) == 2:
         main(sys.argv[1])
+
+    elif len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
+        
     else:
         main()
