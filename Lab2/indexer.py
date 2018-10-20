@@ -6,6 +6,9 @@ import pickle
 
 from Lab1 import preprocess
 
+# Change this to True to enable term position printing where possible
+verbose_print = False
+
 class InvertedIndex(object):
 
     def __init__(self, index=None, N=0, doc_lengths=None):
@@ -40,6 +43,9 @@ class InvertedIndex(object):
     def get_terms(self):
         return sorted([ k for k in self.index ])
 
+    def get_docs(self):
+        return self.doc_lengths.keys()
+
 
     def str_term(self, term):
         string = ''
@@ -73,102 +79,97 @@ class InvertedIndex(object):
         else:
             return # This was a stop word
 
-    def conjunction(self, term1_pre, term2_pre):
+    def single_search(self, term_pre, neg=False):
 
-        term1 = self.prep_term(term1_pre)
-        term2 = self.prep_term(term2_pre)
-        if not term1 or not term2:
-            return # One or both were stop words
+        term = self.prep_term(term_pre)
+        if not term or term not in self.index: return
 
-        docs1 = self.index[term1][1]
-        docs2 = self.index[term2][1]
+        docs = self.index[term][1]
+        if neg:
+            docs = self.get_docs() - docs.keys()
 
-        common_docs = docs1.keys() & docs2.keys()
-
-        for doc in common_docs:
-            print("document {}:".format(doc))
-            # Print 1st term occurances
-            print("\t" + term1 + ": ", end='')
-            for i in range(len(docs1[doc]) - 1):
-                print("{}, ".format(docs1[doc][i]), end='')
-            print( docs1[doc][-1] )
-            # Print 2nd term occurances
-            print("\t" + term2 + ": ", end='')
-            for i in range(len(docs2[doc]) - 1):
-                print("{}, ".format(docs2[doc][i]), end='')
-            print( docs2[doc][-1] )
+        result = ''
+        for doc in sorted(docs):
+            result += str(doc) + ', '
+        print(result[:-2])
 
 
-    def disjunction(self, term1_pre, term2_pre):
+    def conjunction(self, term1_pre, term2_pre, neg=0):
 
-        term1 = self.prep_term(term1_pre)
-        term2 = self.prep_term(term2_pre)
-        if not term1 or not term2:
-            return # One or both were stop words
+        if term1_pre[0] == '"':
+            docs1 = self.phrase_search(term1_pre, True)
+        else:
+            term1 = self.prep_term(term1_pre)
+            if not term1 or term1 not in self.index: return
+            docs1 = self.index[term1][1]
 
-        docs1 = self.index[term1][1]
-        docs2 = self.index[term2][1]
+        if term2_pre[0] == '"':
+            docs2 = self.phrase_search(term2_pre, True)
+        else:
+            term2 = self.prep_term(term2_pre)
+            if not term2 or term2 not in self.index: return
+            docs2 = self.index[term2][1]
 
-        all_docs = docs1.keys() | docs2.keys()
+        if neg == 1:
+            # Negate first
+            docs1 = self.get_docs() - docs1.keys()
+            all_docs = docs1 & docs2.keys()
+        elif neg == 2:
+            # Negate second
+            docs2 = self.get_docs() - docs2.keys()
+            all_docs = docs1.keys() & docs2
+        else:
+            all_docs = docs1.keys() & docs2.keys()
 
-        for doc in all_docs:
-            print("document {}:".format(doc))
-            if doc in docs1:
-                print("\t" + term1 + ": ", end='')
-                for i in range(len(docs1[doc]) - 1):
-                    print("{}, ".format(docs1[doc][i]), end='')
-                print( docs1[doc][-1] )
-            if doc in docs2:
-                print("\t" + term2 + ": ", end='')
-                for i in range(len(docs2[doc]) - 1):
-                    print("{}, ".format(docs2[doc][i]), end='')
-                print( docs2[doc][-1] )
+        result = ''
+        for doc in sorted(all_docs):
+            result += str(doc) + ', '
+        print(result[:-2])
 
 
-    def phrase_search(self, phrase):
+    def disjunction(self, term1_pre, term2_pre, neg=0):
+
+        if term1_pre[0] == '"':
+            docs1 = self.phrase_search(term1_pre, True)
+        else:
+            term1 = self.prep_term(term1_pre)
+            if not term1 or term1 not in self.index: return
+            docs1 = self.index[term1][1]
+
+        if term2_pre[0] == '"':
+            docs2 = self.phrase_search(term2_pre, True)
+        else:
+            term2 = self.prep_term(term2_pre)
+            if not term2 or term2 not in self.index: return
+            docs2 = self.index[term2][1]
+
+        if neg == 1:
+            # Negate first
+            docs1 = self.get_docs() - docs1.keys()
+            all_docs = docs1 | docs2.keys()
+        elif neg == 2:
+            # Negate second
+            docs2 = self.get_docs() - docs2.keys()
+            all_docs = docs1.keys() | docs2
+        else:
+            all_docs = docs1.keys() | docs2.keys()
+
+        result = ''
+        for doc in sorted(all_docs):
+            result += str(doc) + ', '
+        print(result[:-2])
+
+
+    def phrase_search(self, phrase, internal=False):
 
         terms = preprocess.prep_text(phrase)
-        common_docs = {}
-        first = True
-        for term in terms:
-            if term in self.index:
-                if first:
-                    common_docs = set(self.index[term][1].keys())
-                    first = False
-                else:
-                    common_docs &= self.index[term][1].keys()
-            else:
-                return # One term was not found at all
-
-        if len(common_docs) == 0:
-            return # all terms did not exist in any one document
+        if len(terms) == 2:
+            return self.proximity_search(terms[0], terms[1], 1, True, internal)
         else:
-            # If we get this far, we need to check the order of terms
-            pot_docs = {}
-            for doc in common_docs:
-                order = []
-                for term in terms:
-                    order.append(self.index[term][1][doc])
-                pot_docs[doc] = order
-
-            return_docs = {}
-            for doc in pot_docs:
-                for i in pot_docs[doc][0]:
-                    if (i+1) in pot_docs[doc][1]:
-                        # We have found the phrase
-                        if doc in return_docs:
-                            return_docs[doc].append(i)
-                        else:
-                            return_docs[doc] = [i]
-
-            for doc in return_docs:
-                print("{0}: ".format(doc), end='')
-                for i in return_docs[doc]:
-                    print("{0}-{1} ".format(i, i+1), end='')
-                print('')
+            print("Phrase search for more than 2 term is not yet supported")
 
 
-    def proximity_search(self, term1_pre, term2_pre, dist):
+    def proximity_search(self, term1_pre, term2_pre, dist, order=False, internal=False):
 
         term1 = self.prep_term(term1_pre)
         term2 = self.prep_term(term2_pre)
@@ -195,7 +196,7 @@ class InvertedIndex(object):
                 for term in [term1, term2]:
                     order.append(self.index[term][1][doc])
                 pot_docs[doc] = order
-                
+
         return_docs = {doc: [] for doc in pot_docs}
         for doc in pot_docs:
             i = 0
@@ -206,13 +207,16 @@ class InvertedIndex(object):
                 tj = pot_docs[doc][1][j]
                 d = ti - tj
                 if d > 0: # t1 ahead of t2
-                    if d <= dist:
+                    if d <= dist and not order:
                         return_docs[doc].append((ti,tj))
                     j += 1
                 else: # t2 ahead of t1
                     if d >= -dist:
                         return_docs[doc].append((ti,tj))
                     i += 1
+
+        if internal:
+            return return_docs
 
         for doc in return_docs:
             if return_docs[doc] != []:
@@ -277,7 +281,7 @@ def main(filename="sample.xml"):
         f.write(str(index)) # For visualisation
 
     with open(filename + '.pickle', 'wb') as f:
-        pickle.dump((index.index, len(root)), f) # For quick re-load
+        pickle.dump((index.index, len(root), index.doc_lengths), f) # For quick re-load
 
 
 if __name__ == '__main__':

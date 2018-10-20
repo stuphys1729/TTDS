@@ -8,8 +8,8 @@ from Lab2 import indexer
 
 def load_index(filename):
     with open(filename, 'rb') as f:
-        index_dict, N = pickle.load(f)
-    return indexer.InvertedIndex(index_dict, N)
+        index_dict, N, doc_lengths = pickle.load(f)
+    return indexer.InvertedIndex(index_dict, N, doc_lengths)
 
 
 def main(filename='sample.xml.pickle'):
@@ -26,11 +26,22 @@ def main(filename='sample.xml.pickle'):
 
         if ' AND ' in phrase:
             qterms = re.split(r" AND ", phrase)
-            index.conjunction(qterms[0], qterms[1])
+            if qterms[0][:4] == 'NOT ':
+                index.conjunction(qterms[0][4:], qterms[1], 1)
+            elif qterms[1][:4] == 'NOT ':
+                print("Got here")
+                index.conjunction(qterms[0], qterms[1][4:], 2)
+            else:
+                index.conjunction(qterms[0], qterms[1])
 
         elif ' OR ' in phrase:
             qterms = re.split(r' OR ', phrase)
-            index.disjunction(qterms[0], qterms[1])
+            if qterms[0][:4] == 'NOT ':
+                index.disjunction(qterms[0][4:], qterms[1], 1)
+            elif qterms[1][:4] == 'NOT ':
+                index.disjunction(qterms[0], qterms[1][4:], 2)
+            else:
+                index.disjunction(qterms[0], qterms[1])
 
         elif phrase[0] == '"': # Start of a phrase that's not part of conditional
             index.phrase_search(phrase.strip('"'))
@@ -42,12 +53,12 @@ def main(filename='sample.xml.pickle'):
 
             index.proximity_search(prox_terms[0], prox_terms[1], dist)
 
-        else:
-            phrase = preprocess.prep_text(phrase)[0] # 1 word for now
-
-            for term in terms:
-                if phrase == term:
-                    print(index.str_term(term))
+        else: # Assume single term query
+            if phrase[:4] == 'NOT ':
+                index.single_search(phrase[4:], True)
+            else:
+                index.single_search(phrase)
+                
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
