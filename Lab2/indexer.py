@@ -3,6 +3,7 @@ import sys
 sys.path.append("..") # Lets me use other labs as modules
 
 import pickle
+import time
 
 from Lab1 import preprocess
 
@@ -237,6 +238,7 @@ def main(filename="sample.xml"):
 
     tree = ET.parse(filename)
     root = tree.getroot()
+    num_docs = len(root)
 
     index = InvertedIndex()
 
@@ -254,7 +256,15 @@ def main(filename="sample.xml"):
     if text_loc == -1:
         raise ValueError("Could not find collection text")
 
-    for i in range(len(root)):
+    # setup toolbar
+    width = 50
+    sys.stdout.write("Parsing {} documents: [{}]".format(num_docs, " " * width))
+    sys.stdout.flush()
+    sys.stdout.write("\b" * (width+1))
+    prog_points = num_docs // width
+
+    start = time.time()
+    for i in range(num_docs):
 
         # Some security against structure change
         if root[i][text_loc].tag != 'TEXT':
@@ -283,12 +293,22 @@ def main(filename="sample.xml"):
         for j in range(len(terms)):
             index.add_occurance(terms[j], docno, j)
 
+        if i % prog_points == 0:
+            sys.stdout.write("#")
+            sys.stdout.flush()
+
+    sys.stdout.write('\n')
+
+    print("Writing index file {}...".format(filename + '.index'))
     with open(filename + '.index', 'w') as f:
         f.write(str(index)) # For visualisation
 
+    print("Writing binary file {}...".format(filename + '.pickle'))
     with open(filename + '.pickle', 'wb') as f:
-        pickle.dump((index.index, len(root), index.doc_lengths), f) # For quick re-load
+        pickle.dump((index.index, num_docs, index.doc_lengths), f) # For quick re-load
 
+    taken = time.time() - start
+    print("Produced index of {} documents in {:.1f} seconds".format(num_docs, taken))
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

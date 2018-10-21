@@ -42,7 +42,6 @@ def process_query(index, terms, phrase):
             if qterms[0][:4] == 'NOT ':
                 index.conjunction(qterms[0][4:], qterms[1], 1)
             elif qterms[1][:4] == 'NOT ':
-                print("Got here")
                 index.conjunction(qterms[0], qterms[1][4:], 2)
             else:
                 index.conjunction(qterms[0], qterms[1])
@@ -80,6 +79,6 @@ if __name__ == '__main__':
 
     elif len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
-        
+
     else:
         main()
