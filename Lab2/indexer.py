@@ -95,14 +95,14 @@ class InvertedIndex(object):
     def conjunction(self, num, term1_pre, term2_pre, neg=0):
 
         if term1_pre[0] == '"':
-            docs1 = self.phrase_search(term1_pre, True)
+            docs1 = self.phrase_search(num, term1_pre, True)
         else:
             term1 = self.prep_term(term1_pre)
             if not term1 or term1 not in self.index: return
             docs1 = self.index[term1][1]
 
         if term2_pre[0] == '"':
-            docs2 = self.phrase_search(term2_pre, True)
+            docs2 = self.phrase_search(num, term2_pre, True)
         else:
             term2 = self.prep_term(term2_pre)
             if not term2 or term2 not in self.index: return
@@ -125,14 +125,14 @@ class InvertedIndex(object):
     def disjunction(self, num, term1_pre, term2_pre, neg=0):
 
         if term1_pre[0] == '"':
-            docs1 = self.phrase_search(term1_pre, True)
+            docs1 = self.phrase_search(num, term1_pre, True)
         else:
             term1 = self.prep_term(term1_pre)
             if not term1 or term1 not in self.index: return
             docs1 = self.index[term1][1]
 
         if term2_pre[0] == '"':
-            docs2 = self.phrase_search(term2_pre, True)
+            docs2 = self.phrase_search(num, term2_pre, True)
         else:
             term2 = self.prep_term(term2_pre)
             if not term2 or term2 not in self.index: return

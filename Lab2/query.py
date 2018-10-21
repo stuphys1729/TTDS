@@ -21,7 +21,7 @@ def main(filename='sample.xml.pickle', queryfile=None):
     if queryfile:
         with open(queryfile, 'r') as f:
             for line in f:
-                print(line.rstrip('\n'))
+                #print(line.rstrip('\n'))
                 m = re.search(r'(\d+) (.*)', line)
                 process_query( index, terms, m.group(1), m.group(2) )
 
