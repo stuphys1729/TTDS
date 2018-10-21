@@ -22,54 +22,55 @@ def main(filename='sample.xml.pickle', queryfile=None):
         with open(queryfile, 'r') as f:
             for line in f:
                 print(line.rstrip('\n'))
-                m = re.search(r'\d+ (.*)', line)
-                process_query( index, terms, m.group(1) )
+                m = re.search(r'(\d+) (.*)', line)
+                process_query( index, terms, m.group(1), m.group(2) )
 
     else:
+        qno = 1
         while(True):
             phrase = input("> ")
 
             if phrase.lower() == 'stop' or phrase.lower() == 'quit':
                 break
 
-            process_query(index, terms, phrase)
+            process_query(index, terms, qno, phrase)
 
 
-def process_query(index, terms, phrase):
+def process_query(index, terms, num, phrase):
 
         if ' AND ' in phrase:
             qterms = re.split(r" AND ", phrase)
             if qterms[0][:4] == 'NOT ':
-                index.conjunction(qterms[0][4:], qterms[1], 1)
+                index.conjunction(num, qterms[0][4:], qterms[1], 1)
             elif qterms[1][:4] == 'NOT ':
-                index.conjunction(qterms[0], qterms[1][4:], 2)
+                index.conjunction(num, qterms[0], qterms[1][4:], 2)
             else:
-                index.conjunction(qterms[0], qterms[1])
+                index.conjunction(num, qterms[0], qterms[1])
 
         elif ' OR ' in phrase:
             qterms = re.split(r' OR ', phrase)
             if qterms[0][:4] == 'NOT ':
-                index.disjunction(qterms[0][4:], qterms[1], 1)
+                index.disjunction(num, qterms[0][4:], qterms[1], 1)
             elif qterms[1][:4] == 'NOT ':
-                index.disjunction(qterms[0], qterms[1][4:], 2)
+                index.disjunction(num, qterms[0], qterms[1][4:], 2)
             else:
-                index.disjunction(qterms[0], qterms[1])
+                index.disjunction(num, qterms[0], qterms[1])
 
         elif phrase[0] == '"': # Start of a phrase that's not part of conditional
-            index.phrase_search(phrase.strip('"'))
+            index.phrase_search(num, phrase.strip('"'))
 
         elif phrase[0] == '#':
             first_split = phrase.split('(')
             dist = int( first_split[0][1:] )
             prox_terms = first_split[1].split(',')
 
-            index.proximity_search(prox_terms[0], prox_terms[1], dist)
+            index.proximity_search(num, prox_terms[0], prox_terms[1], dist)
 
         else: # Assume single term query
             if phrase[:4] == 'NOT ':
-                index.single_search(phrase[4:], True)
+                index.single_search(num, phrase[4:], True)
             else:
-                index.single_search(phrase)
+                index.single_search(num, phrase)
 
 
 if __name__ == '__main__':

@@ -80,7 +80,7 @@ class InvertedIndex(object):
         else:
             return # This was a stop word
 
-    def single_search(self, term_pre, neg=False):
+    def single_search(self, num, term_pre, neg=False):
 
         term = self.prep_term(term_pre)
         if not term or term not in self.index: return
@@ -89,13 +89,10 @@ class InvertedIndex(object):
         if neg:
             docs = self.get_docs() - docs.keys()
 
-        result = ''
-        for doc in sorted(docs):
-            result += str(doc) + ', '
-        print(result[:-2])
+        self.print_results(num, docs)
 
 
-    def conjunction(self, term1_pre, term2_pre, neg=0):
+    def conjunction(self, num, term1_pre, term2_pre, neg=0):
 
         if term1_pre[0] == '"':
             docs1 = self.phrase_search(term1_pre, True)
@@ -122,13 +119,10 @@ class InvertedIndex(object):
         else:
             all_docs = docs1.keys() & docs2.keys()
 
-        result = ''
-        for doc in sorted(all_docs):
-            result += str(doc) + ', '
-        print(result[:-2])
+        self.print_results(num, all_docs)
 
 
-    def disjunction(self, term1_pre, term2_pre, neg=0):
+    def disjunction(self, num, term1_pre, term2_pre, neg=0):
 
         if term1_pre[0] == '"':
             docs1 = self.phrase_search(term1_pre, True)
@@ -155,22 +149,19 @@ class InvertedIndex(object):
         else:
             all_docs = docs1.keys() | docs2.keys()
 
-        result = ''
-        for doc in sorted(all_docs):
-            result += str(doc) + ', '
-        print(result[:-2])
+        self.print_results(num, all_docs)
 
 
-    def phrase_search(self, phrase, internal=False):
+    def phrase_search(self, num, phrase, internal=False):
 
         terms = preprocess.prep_text(phrase)
         if len(terms) == 2:
-            return self.proximity_search(terms[0], terms[1], 1, True, internal)
+            return self.proximity_search(num, terms[0], terms[1], 1, True, internal)
         else:
             print("Phrase search for more than 2 term is not yet supported")
 
 
-    def proximity_search(self, term1_pre, term2_pre, dist, order=False, internal=False):
+    def proximity_search(self, num, term1_pre, term2_pre, dist, order=False, internal=False):
 
         term1 = self.prep_term(term1_pre)
         term2 = self.prep_term(term2_pre)
@@ -228,10 +219,13 @@ class InvertedIndex(object):
 
                     print("({0},{1})".format(*return_docs[doc][-1]))
         else:
-            result = ''
-            for doc in sorted(return_docs):
-                result += str(doc) + ', '
-            print(result[:-2])
+            self.print_results(num, return_docs)
+
+
+    def print_results(self, num, return_docs):
+
+        for doc in sorted(return_docs):
+            print( "{0:>2} 0 {1:>5} 0 1 0".format(num, doc))
 
 
 def main(filename="sample.xml"):
