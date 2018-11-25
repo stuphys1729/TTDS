@@ -99,9 +99,16 @@ class Features(object):
 
     def load_from_file(filename='feats.dic'):
         terms = {}
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding="utf8") as f:
+            i = 0
             for line in f:
-                term, id = *line.split('\t'),
+                i += 1
+                try:
+                    term, id = *line.split('\t'),
+                except ValueError as e:
+                    print(line)
+                    print(i)
+                    raise e
                 terms[term] = int(id)
         return Features(terms)
 
@@ -236,9 +243,9 @@ def main(filename="Tweets.14cat.train"):
     except KeyboardInterrupt:
         sys.exit(1)
 
-    print("Main ready")
-
     sys.stdout.write('\n')
+
+    print("Main ready")
 
     for i in range(num_lines):
         for tok in resDic[i]:
